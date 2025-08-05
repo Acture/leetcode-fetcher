@@ -14,6 +14,7 @@ struct SolutionList;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SolutionInfo {
+	pub question_slug: String,
 	pub uuid: String,
 	pub title: String,
 	pub slug: String,
@@ -24,7 +25,7 @@ pub struct SolutionInfo {
 pub async fn grab_solution_list(question_slug: String, crsf_token: String) -> Result<Vec<SolutionInfo>, Box<dyn Error>> {
 	let variables = <SolutionList as GraphQLQuery>::Variables
 	{
-		question_slug: question_slug,
+		question_slug: question_slug.clone(),
 		skip: Some(
 		0),
 		first: Some(
@@ -62,6 +63,7 @@ pub async fn grab_solution_list(question_slug: String, crsf_token: String) -> Re
 							})
 							.collect::<Vec<_>>();
 						Ok(SolutionInfo {
+							question_slug: question_slug.clone(),
 							uuid: node.uuid.ok_or("No uuid")?,
 							title: node.title.ok_or("No title")?,
 							slug: node.slug.ok_or("No slug")?,

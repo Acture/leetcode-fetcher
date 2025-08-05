@@ -1,7 +1,9 @@
 #![feature(more_qualified_paths)]
 use clap::Parser;
-use std::fs::{self, write};
+use std::fs::{self, write, File};
 use std::io::stdout;
+use futures::future::join_all;
+use leetcode_fetcher::query::problem::ProblemInfo;
 
 mod cliargs;
 
@@ -26,8 +28,20 @@ async fn main() {
 			let crfs_token = args.crfs_token
 				.or_else(|| std::env::var("LEETCODE_CSRF").ok()) // 从环境变量 LEETCODE_CSRF 获取值
 				.expect("crfs_token is required (either pass as an argument or set LEETCODE_CSRF in environment)");
-			let solutions = leetcode_fetcher::query::solution::grab_solution_list(args.question_slug, crfs_token).await.expect("Failed to grab solutions");
+			let slugs: Vec<String> = (|| {
+				if let Some(file) = args.file {
+					let file = fs::File::open(file).expect("Failed to open file");
+					return serde_json::from_reader::<File, Vec<ProblemInfo>>(file)
+						.expect("Failed to read file").into_iter().map(|problem_info| problem_info.title_slug).collect::<Vec<_>>();
+				};
+				if let Some(question_slug) = args.question_slug {
+					return vec![question_slug];
+				}
+				vec![]
+			})();
 
+			let futures = slugs.into_iter().map(|question_slug| async { leetcode_fetcher::query::solution::grab_solution_list(question_slug, crfs_token.clone()).await.expect("Failed to grab solutions") }).collect::<Vec<_>>();
+			let solutions = join_all(futures).await;
 			match args.outpath {
 				Some(outpath) => {
 					let file = fs::File::create_new(outpath).expect("Failed to create file");

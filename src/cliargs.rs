@@ -23,8 +23,16 @@ pub struct FetchQuestionListArgs {
 
 
 #[derive(Args, Debug, Clone)]
+#[command(group(
+	ArgGroup::new("input")
+		.required(true)
+		.args(["question_slug", "file"])
+))]
 pub struct FetchSolutionListArgs {
-	pub question_slug: String,
+	#[arg(short, long)]
+	pub question_slug: Option<String>,
+	#[arg(short, long)]
+	pub file: Option<PathBuf>,
 	#[arg(short, long)]
 	pub crfs_token: Option<String>,
 	#[arg(short, long, default_value = None)]
