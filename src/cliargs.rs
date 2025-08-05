@@ -16,6 +16,6 @@ pub struct CliArgs {
 
 #[derive(Args, Debug, Clone)]
 pub struct FetchQuestionListArgs {
-	#[arg(short, long, default_value = "None")]
+	#[arg(short, long, default_value = None)]
 	pub outpath: Option<PathBuf>,
 }
