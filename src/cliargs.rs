@@ -6,6 +6,7 @@ use clap::{Args, Parser, Subcommand};
 
 pub enum Commands {
 	FetchQuestionList(FetchQuestionListArgs),
+	FetchSolutionList(FetchSolutionListArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -16,6 +17,16 @@ pub struct CliArgs {
 
 #[derive(Args, Debug, Clone)]
 pub struct FetchQuestionListArgs {
+	#[arg(short, long, default_value = None)]
+	pub outpath: Option<PathBuf>,
+}
+
+
+#[derive(Args, Debug, Clone)]
+pub struct FetchSolutionListArgs {
+	pub question_slug: String,
+	#[arg(short, long)]
+	pub crfs_token: Option<String>,
 	#[arg(short, long, default_value = None)]
 	pub outpath: Option<PathBuf>,
 }
