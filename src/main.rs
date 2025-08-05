@@ -1,9 +1,13 @@
 #![feature(more_qualified_paths)]
+
+use std::collections::HashMap;
 use clap::Parser;
 use std::fs::{self, write, File};
+use std::hash::RandomState;
 use std::io::stdout;
 use futures::future::join_all;
 use leetcode_fetcher::query::problem::ProblemInfo;
+use leetcode_fetcher::query::solution::SolutionInfo;
 
 mod cliargs;
 
@@ -35,13 +39,24 @@ async fn main() {
 						.expect("Failed to read file").into_iter().map(|problem_info| problem_info.title_slug).collect::<Vec<_>>();
 				};
 				if let Some(question_slug) = args.question_slug {
-					return vec![question_slug];
+					return vec![question_slug.clone()];
 				}
 				vec![]
 			})();
 
-			let futures = slugs.into_iter().map(|question_slug| async { leetcode_fetcher::query::solution::grab_solution_list(question_slug, crfs_token.clone()).await.expect("Failed to grab solutions") }).collect::<Vec<_>>();
-			let solutions = join_all(futures).await;
+			let tasks = slugs.into_iter()
+				.map(|question_slug| async {
+					let solutions = leetcode_fetcher::query::solution::grab_solution_list(
+						question_slug.clone(),
+						crfs_token.clone(),
+					)
+						.await
+						.expect("Failed to grab solutions");
+					(question_slug, solutions)
+				})
+				.collect::<Vec<_>>();
+			let results: Vec<(String, Vec<SolutionInfo>)> = join_all(tasks).await;
+			let solutions: HashMap<_, _, RandomState> = HashMap::from_iter(results);
 			match args.outpath {
 				Some(outpath) => {
 					let file = fs::File::create_new(outpath).expect("Failed to create file");
