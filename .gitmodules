@@ -1,0 +1,4 @@
+[submodule "leetcode-graphql"]
+	path = leetcode-graphql
+	url = git@github.com:Acture/leetcode-graphql.git
+	branch = master
